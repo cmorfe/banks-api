@@ -1,18 +1,15 @@
 package com.cmorfe.banks.api.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
-@Data
-@Builder
 @Entity
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "branches")
@@ -40,15 +37,4 @@ public class Branch {
     @ManyToOne
     @JoinColumn(name = "bank_id", nullable = false)
     private Bank bank;
-
-    @Override
-    public String toString() {
-        return "Branch{" +
-                "id=" + id +
-                ", code='" + code + '\'' +
-                ", address='" + address + '\'' +
-                ", phone='" + phone + '\'' +
-                ", bankId=" + (bank != null ? bank.getId() : null) +
-                '}';
-    }
 }

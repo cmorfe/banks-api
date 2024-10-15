@@ -1,13 +1,13 @@
 package com.cmorfe.banks.api.infrastructure.interfaces.dto;
 
 import com.cmorfe.banks.api.domain.model.BankType;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
-@Data
+@Setter
+@Getter
+@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 public class BankResponseDTO {

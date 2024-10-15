@@ -1,7 +1,7 @@
 package com.cmorfe.banks.api.infrastructure.configuration;
 
-import com.cmorfe.banks.api.infrastructure.interfaces.dto.ErrorResponse;
-import com.cmorfe.banks.api.infrastructure.interfaces.dto.ValidationErrorResponse;
+import com.cmorfe.banks.api.infrastructure.error.ErrorResponse;
+import com.cmorfe.banks.api.infrastructure.error.ValidationErrorResponse;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -41,6 +41,7 @@ class GlobalExceptionHandlerTest {
     private static final String INVALID_ARGUMENT = "Invalid argument";
     private static final String FIELD_VALUE_MUST_BE_ONE_OF = "Field field must be one of [VALUE1, VALUE2]";
     private static final String VALUE_IS_EXPECTED_TO_BE_OF_TYPE = "'field' is expected to be of type 'String'";
+    private static final String MISMATCHED_INPUT = "Mismatched input";
     @InjectMocks
     private GlobalExceptionHandler globalExceptionHandler;
 
@@ -191,7 +192,9 @@ class GlobalExceptionHandlerTest {
             void shouldHandleInvalidFormatException() {
                 mockInvalidFormatException(String.class);
 
-                ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleInvalidFormatException(invalidFormatException);
+                HttpMessageNotReadableException exception = new HttpMessageNotReadableException(invalidFormatException.getMessage(), invalidFormatException);
+
+                ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleHttpMessageNotReadableException(exception);
 
                 assertErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_FIELD_VALUE, INVALID_VALUE);
             }
@@ -200,7 +203,9 @@ class GlobalExceptionHandlerTest {
             void shouldHandleInvalidFormatExceptionForEnum() {
                 mockInvalidFormatException(TestEnum.class);
 
-                ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleInvalidFormatException(invalidFormatException);
+                HttpMessageNotReadableException exception = new HttpMessageNotReadableException(invalidFormatException.getMessage(), invalidFormatException);
+
+                ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleHttpMessageNotReadableException(exception);
 
                 assertErrorResponse(response, HttpStatus.BAD_REQUEST, INVALID_FIELD_VALUE, FIELD_VALUE_MUST_BE_ONE_OF);
             }
@@ -217,7 +222,7 @@ class GlobalExceptionHandlerTest {
 
         @Test
         void shouldHandleMismatchedInputException() {
-            MismatchedInputException exception = new MismatchedInputException(null, "Mismatched input", String.class) {
+            MismatchedInputException exception = new MismatchedInputException(null, MISMATCHED_INPUT, String.class) {
             };
 
             ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleHttpMessageNotReadableException(new HttpMessageNotReadableException(exception.getMessage(), exception));
@@ -235,14 +240,14 @@ class GlobalExceptionHandlerTest {
         }
 
         @Test
-        void shouldHandleDefaultHttpMessageNotReadableException() {
-            HttpMessageNotReadableException exception = new HttpMessageNotReadableException(INVALID_REQUEST_BODY);
+        void shouldHandleUnknownException() {
+            Exception unknownException = new Exception("Unknown exception");
+            HttpMessageNotReadableException exception = new HttpMessageNotReadableException(unknownException.getMessage(), unknownException);
 
             ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleHttpMessageNotReadableException(exception);
 
-            assertErrorResponse(response, HttpStatus.BAD_REQUEST, BAD_REQUEST, REQUIRED_REQUEST_BODY);
-        }
-    }
+            assertErrorResponse(response, HttpStatus.BAD_REQUEST, BAD_REQUEST, INVALID_REQUEST_BODY);
+        }    }
 
     @Nested
     class HandleGeneralExceptionsTests {

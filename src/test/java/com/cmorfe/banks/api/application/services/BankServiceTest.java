@@ -22,11 +22,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static com.cmorfe.banks.api.util.TestDataUtils.*;
+import static com.cmorfe.banks.api.util.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
@@ -40,6 +41,7 @@ class BankServiceTest {
     private static final String UPDATED_BANK_NAME = "Updated Bank";
     private static final String BANK_1_NAME = "Bank 1";
     private static final String BANK_2_NAME = "Bank 2";
+
     @Mock
     private BankRepository bankRepository;
 
@@ -68,13 +70,17 @@ class BankServiceTest {
 
     private BankResponseDTO updatedBankResponseDTO;
 
+    private Instant now;
+
     @BeforeEach
     void setUp() {
         id = 1L;
 
-        bank = createBank(id, BANK_1_NAME, BankType.PUBLIC);
+        now = Instant.now();
 
-        Bank bank2 = createBank(2L, BANK_2_NAME, BankType.PRIVATE);
+        bank = createBank(id, BANK_1_NAME, BankType.PUBLIC, now);
+
+        Bank bank2 = createBank(2L, BANK_2_NAME, BankType.PRIVATE, now);
 
         banks = Arrays.asList(bank, bank2);
 
@@ -85,7 +91,7 @@ class BankServiceTest {
                 createBankResponseDTO(bank2)
         );
 
-        updatedBank = createBank(id, UPDATED_BANK_NAME, BankType.PUBLIC);
+        updatedBank = createBank(id, UPDATED_BANK_NAME, BankType.PUBLIC, now);
 
         updatedBankRequestDTO = createBankRequestDTO(updatedBank);
 
@@ -126,7 +132,7 @@ class BankServiceTest {
     class CreateTests {
         @Test
         void testCreate() {
-            Bank newBank = createBank(null, BANK_1_NAME, BankType.PUBLIC);
+            Bank newBank = createBank(null, BANK_1_NAME, BankType.PUBLIC, now);
 
             doReturn(bank).when(bankRepository).save(any(Bank.class));
 
@@ -165,7 +171,7 @@ class BankServiceTest {
         void testUpdateBankWithNewBranch() {
             long branchId = 3L;
 
-            Bank updateBank = getUpdateBankWithNewBranch(id, BANK_1_NAME, branchId);
+            Bank updateBank = getUpdateBankWithNewBranch(id, BANK_1_NAME, branchId, now);
 
             when(bankRepository.findById(id)).thenReturn(Optional.of(bank));
 
@@ -177,11 +183,11 @@ class BankServiceTest {
 
         @Test
         void testUpdateBankRemovesOrphanBranches() {
-            Branch branchToRemove = createBranch(2L);
+            Branch branchToRemove = createBranch(2L, now);
             branchToRemove.setBank(bank);
             bank.getBranches().add(branchToRemove);
 
-            Bank updateData = createBank(id, BANK_1_NAME, BankType.PUBLIC);
+            Bank updateData = createBank(id, BANK_1_NAME, BankType.PUBLIC, now);
 
             when(bankRepository.findById(id)).thenReturn(Optional.of(bank));
 

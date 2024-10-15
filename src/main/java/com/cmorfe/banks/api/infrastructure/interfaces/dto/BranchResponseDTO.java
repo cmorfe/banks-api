@@ -1,10 +1,12 @@
 package com.cmorfe.banks.api.infrastructure.interfaces.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Setter
+@Getter
+@EqualsAndHashCode
 @AllArgsConstructor
+@NoArgsConstructor
 public class BranchResponseDTO {
     private Long id;
     private String code;

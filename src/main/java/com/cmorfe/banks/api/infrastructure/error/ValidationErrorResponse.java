@@ -1,18 +1,18 @@
-package com.cmorfe.banks.api.infrastructure.interfaces.dto;
+package com.cmorfe.banks.api.infrastructure.error;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 
 import java.util.List;
 
-@Data
+@Getter
 @AllArgsConstructor
 public class ValidationErrorResponse {
     private String message;
 
     private List<FieldError> errors;
 
-    @Data
+    @Getter
     @AllArgsConstructor
     public static class FieldError {
         private String field;

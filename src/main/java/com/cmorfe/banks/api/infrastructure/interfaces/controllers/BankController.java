@@ -1,7 +1,7 @@
 package com.cmorfe.banks.api.infrastructure.interfaces.controllers;
 
 import com.cmorfe.banks.api.application.services.BankService;
-import com.cmorfe.banks.api.infrastructure.interfaces.dto.ErrorResponse;
+import com.cmorfe.banks.api.infrastructure.error.ErrorResponse;
 import com.cmorfe.banks.api.infrastructure.interfaces.dto.BankRequestDTO;
 import com.cmorfe.banks.api.infrastructure.interfaces.dto.BankResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;

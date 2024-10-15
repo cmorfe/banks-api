@@ -21,9 +21,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.Instant;
 import java.util.List;
 
-import static com.cmorfe.banks.api.util.TestDataUtils.*;
+import static com.cmorfe.banks.api.util.TestUtils.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -62,9 +63,11 @@ class BankControllerTest {
     void setUp() {
         id = 1L;
 
-        updatedBank = createBank(id, UPDATED_BANK_NAME, BankType.PUBLIC);
+        Instant now = Instant.now();
 
-        Bank bank1 = createBank(id, BANK_1_NAME, BankType.PUBLIC);
+        updatedBank = createBank(id, UPDATED_BANK_NAME, BankType.PUBLIC, now);
+
+        Bank bank1 = createBank(id, BANK_1_NAME, BankType.PUBLIC, now);
 
         bankRequestDTO = createBankRequestDTO(bank1);
 
@@ -72,7 +75,7 @@ class BankControllerTest {
 
         bankResponseDTO = createBankResponseDTO(bank1);
 
-        Bank bank2 = createBank(2L, BANK_2_NAME, BankType.PRIVATE);
+        Bank bank2 = createBank(2L, BANK_2_NAME, BankType.PRIVATE, now);
 
         BankResponseDTO bankResponseDTO2 = createBankResponseDTO(bank2);
 
@@ -134,32 +137,32 @@ class BankControllerTest {
                             .content(new ObjectMapper().writeValueAsString(invalidRequestDTO)))
                     .andExpect(status().isBadRequest());
         }
+    }
 
-        @Nested
-        class UpdateTests {
-            @Test
-            void testUpdate() throws Exception {
-                BankResponseDTO updatedBankResponseDTO = createBankResponseDTO(updatedBank);
+    @Nested
+    class UpdateTests {
+        @Test
+        void testUpdate() throws Exception {
+            BankResponseDTO updatedBankResponseDTO = createBankResponseDTO(updatedBank);
 
-                when(bankService.update(id, updatedBankRequestDTO)).thenReturn(updatedBankResponseDTO);
+            when(bankService.update(id, updatedBankRequestDTO)).thenReturn(updatedBankResponseDTO);
 
-                mockMvc.perform(put(API_BANKS_ID, id)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(new ObjectMapper().writeValueAsString(updatedBankRequestDTO)))
-                        .andExpect(status().isOk())
-                        .andExpect(JsonResultMatchers.jsonEquals(updatedBankResponseDTO));
-            }
+            mockMvc.perform(put(API_BANKS_ID, id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(new ObjectMapper().writeValueAsString(updatedBankRequestDTO)))
+                    .andExpect(status().isOk())
+                    .andExpect(JsonResultMatchers.jsonEquals(updatedBankResponseDTO));
+        }
 
-            @Test
-            void testUpdateNotFound() throws Exception {
-                when(bankService.update(id, updatedBankRequestDTO))
-                        .thenThrow(new EntityNotFoundException(BANK_ID_NOT_FOUND + id));
+        @Test
+        void testUpdateNotFound() throws Exception {
+            when(bankService.update(id, updatedBankRequestDTO))
+                    .thenThrow(new EntityNotFoundException(BANK_ID_NOT_FOUND + id));
 
-                mockMvc.perform(put(API_BANKS_ID, id)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(new ObjectMapper().writeValueAsString(updatedBankRequestDTO)))
-                        .andExpect(status().isNotFound());
-            }
+            mockMvc.perform(put(API_BANKS_ID, id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(new ObjectMapper().writeValueAsString(updatedBankRequestDTO)))
+                    .andExpect(status().isNotFound());
         }
     }
 

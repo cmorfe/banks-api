@@ -1,7 +1,7 @@
 package com.cmorfe.banks.api.infrastructure.configuration;
 
-import com.cmorfe.banks.api.infrastructure.interfaces.dto.ErrorResponse;
-import com.cmorfe.banks.api.infrastructure.interfaces.dto.ValidationErrorResponse;
+import com.cmorfe.banks.api.infrastructure.error.ErrorResponse;
+import com.cmorfe.banks.api.infrastructure.error.ValidationErrorResponse;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -99,9 +99,7 @@ public class GlobalExceptionHandler {
             case InvalidFormatException invalidFormatException -> {
                 return handleInvalidFormatException(invalidFormatException);
             }
-            case HttpMessageNotReadableException ignored -> {
-                details = REQUIRED_REQUEST_BODY;
-            }
+            case HttpMessageNotReadableException ignored -> details = REQUIRED_REQUEST_BODY;
             case MismatchedInputException ignored -> {
                 message = INVALID_FORMAT_ERROR;
 
@@ -112,9 +110,7 @@ public class GlobalExceptionHandler {
 
                 details = jsonParseException.getOriginalMessage();
             }
-            default -> {
-                details = INVALID_REQUEST_BODY;
-            }
+            default -> details = INVALID_REQUEST_BODY;
         }
 
         ErrorResponse errorResponse = new ErrorResponse(message, details);

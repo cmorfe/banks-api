@@ -9,14 +9,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Schema(description = "Details about the bank")
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 public class BankRequestDTO {
@@ -30,8 +30,8 @@ public class BankRequestDTO {
     @JsonDeserialize(using = BankTypeDeserializer.class)
     private BankType type;
 
-    @Schema(description = "The list of branches of the bank")
     @Valid
+    @Schema(description = "The list of branches of the bank")
     @NotEmpty(message = "The branches are required")
     private List<BranchRequestDTO> branches;
 }

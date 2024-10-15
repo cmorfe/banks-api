@@ -1,9 +1,9 @@
-package com.cmorfe.banks.api.infrastructure.interfaces.dto;
+package com.cmorfe.banks.api.infrastructure.error;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 @AllArgsConstructor
 public class ErrorResponse {
     private String message;

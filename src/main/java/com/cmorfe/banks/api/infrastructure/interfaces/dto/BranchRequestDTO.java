@@ -3,12 +3,14 @@ package com.cmorfe.banks.api.infrastructure.interfaces.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 @Schema(description = "Details about the branch")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class BranchRequestDTO {
     @Schema(description = "The code of the branch", example = "3420")
     @NotBlank(message = "Code is required")
