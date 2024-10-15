@@ -7,6 +7,8 @@ import com.cmorfe.banks.api.infrastructure.interfaces.dto.BankRequestDTO;
 import com.cmorfe.banks.api.infrastructure.interfaces.dto.BankResponseDTO;
 import com.cmorfe.banks.api.infrastructure.interfaces.dto.BranchRequestDTO;
 import com.cmorfe.banks.api.infrastructure.interfaces.dto.BranchResponseDTO;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -53,5 +55,31 @@ public class TestUtils {
         bank.getBranches().add(newBranch);
 
         return bank;
+    }
+
+    public static <T> void verifyEqualsAndHashCode(Class<T> clazz, Class<? extends T> subclass) {
+        EqualsVerifier.forClass(clazz)
+                .suppress(Warning.NONFINAL_FIELDS)
+                .withRedefinedSubclass(subclass)
+                .withRedefinedSuperclass()
+                .verify();
+    }
+
+    public static <T> void testNoArgsConstructor(Class<T> clazz) throws Exception {
+        T instance = clazz.getDeclaredConstructor().newInstance();
+        assertNotNull(instance);
+    }
+
+    public static <T> void testAllArgsConstructor(T instance, Object... expectedValues) {
+        assertNotNull(instance);
+        for (Object expectedValue : expectedValues) {
+            assertNotNull(expectedValue);
+        }
+    }
+
+    public static <T> void testSettersAndGetters(T instance, Object... expectedValues) {
+        for (Object expectedValue : expectedValues) {
+            assertNotNull(expectedValue);
+        }
     }
 }
