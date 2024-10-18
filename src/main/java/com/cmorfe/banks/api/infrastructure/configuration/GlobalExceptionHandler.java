@@ -49,16 +49,8 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private static void logError(String error, Exception exception) {
-        logError(error, exception, null);
-    }
-
-    private static void logError(String error, Exception exception, String message) {
-        if (message == null) {
-            message = exception.getMessage();
-        }
-
-        logger.error("{}: {}", error, message, exception);
+    private static void logError(String error, Throwable exception) {
+        logger.error("{}: {}", error, exception.getMessage(), exception);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -67,6 +59,10 @@ public class GlobalExceptionHandler {
                 .map(error -> new ValidationErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
                 .collect(Collectors.toList());
 
+        return buildValidationErrorResponse(exception, errors);
+    }
+
+    private ResponseEntity<ValidationErrorResponse> buildValidationErrorResponse(MethodArgumentNotValidException exception, List<ValidationErrorResponse.FieldError> errors) {
         ValidationErrorResponse errorResponse = new ValidationErrorResponse(VALIDATION_ERROR, errors);
 
         logError(VALIDATION_ERROR, exception);
@@ -82,11 +78,7 @@ public class GlobalExceptionHandler {
                 Objects.requireNonNull(exception.getRequiredType()).getSimpleName()
         );
 
-        ErrorResponse errorResponse = new ErrorResponse(INVALID_FIELD_TYPE, error);
-
-        logError(INVALID_FIELD_TYPE, exception);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(INVALID_FIELD_TYPE, error, exception, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -113,14 +105,10 @@ public class GlobalExceptionHandler {
             default -> details = INVALID_REQUEST_BODY;
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(message, details);
-
-        logError(message, exception);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(message, details, exception, HttpStatus.BAD_REQUEST);
     }
 
-    ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException exception) {
+    private ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException exception) {
         String fieldName = exception.getPath().stream()
                 .map(JsonMappingException.Reference::getFieldName)
                 .collect(Collectors.joining("."));
@@ -141,38 +129,26 @@ public class GlobalExceptionHandler {
             details = String.format(FIELD_MUST_BE_ONE_OF, fieldName, acceptedValues);
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(message, details);
-
-        logError(message, exception);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(message, details, exception, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException exception) {
-        ErrorResponse errorResponse = new ErrorResponse(INVALID_FORMAT_ERROR, exception.getMessage());
+        return buildErrorResponse(INVALID_FORMAT_ERROR, exception.getMessage(), exception, HttpStatus.BAD_REQUEST);
+    }
 
-        logError(INVALID_FORMAT_ERROR, exception);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    private ResponseEntity<ErrorResponse> handleNotFoundException(Exception exception) {
+        return buildErrorResponse(NOT_FOUND, exception.getMessage(), exception, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException exception) {
-        ErrorResponse errorResponse = new ErrorResponse(NOT_FOUND, exception.getMessage());
-
-        logError(NOT_FOUND, exception);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        return handleNotFoundException(exception);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFoundException(NoResourceFoundException exception) {
-        ErrorResponse errorResponse = new ErrorResponse(NOT_FOUND, exception.getMessage());
-
-        logError(NOT_FOUND, exception);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        return handleNotFoundException(exception);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -181,25 +157,23 @@ public class GlobalExceptionHandler {
 
         if (message.contains(BANKS_NAME_UNIQUE_INDEX)) {
             message = BANK_NAME_ALREADY_EXISTS;
-        }
-
-        if (message.contains(BRANCHES_CODE_UNIQUE_INDEX)) {
+        } else if (message.contains(BRANCHES_CODE_UNIQUE_INDEX)) {
             message = BRANCH_CODE_ALREADY_EXISTS;
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(DATA_INTEGRITY_VIOLATION, message);
-
-        logError(DATA_INTEGRITY_VIOLATION, exception, message);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        return buildErrorResponse(DATA_INTEGRITY_VIOLATION, message, exception, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralExceptions(Exception exception) {
-        ErrorResponse errorResponse = new ErrorResponse(INTERNAL_SERVER_ERROR, exception.getMessage());
+        return buildErrorResponse(INTERNAL_SERVER_ERROR, exception.getMessage(), exception, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-        logError(INTERNAL_SERVER_ERROR, exception);
+    private ResponseEntity<ErrorResponse> buildErrorResponse(String message, String details, Throwable exception, HttpStatus status) {
+        ErrorResponse errorResponse = new ErrorResponse(message, details);
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        logError(message, exception);
+
+        return new ResponseEntity<>(errorResponse, status);
     }
 }
