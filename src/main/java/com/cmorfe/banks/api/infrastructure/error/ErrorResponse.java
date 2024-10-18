@@ -1,12 +1,13 @@
 package com.cmorfe.banks.api.infrastructure.error;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
-public class ErrorResponse {
-    private String message;
+public class ErrorResponse extends BaseErrorResponse {
+    private final String details;
 
-    private String details;
+    public ErrorResponse(String message, String details) {
+        super(message);
+        this.details = details;
+    }
 }

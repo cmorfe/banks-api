@@ -6,11 +6,13 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-@AllArgsConstructor
-public class ValidationErrorResponse {
-    private String message;
+public class ValidationErrorResponse extends BaseErrorResponse {
+    private final List<FieldError> errors;
 
-    private List<FieldError> errors;
+    public ValidationErrorResponse(String validationError, List<FieldError> errors) {
+        super(validationError);
+        this.errors = errors;
+    }
 
     @Getter
     @AllArgsConstructor
