@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class BankService {
@@ -53,59 +55,86 @@ public class BankService {
 
     @Transactional
     public BankResponseDTO create(BankRequestDTO bankRequestDTO) {
-        Bank entity = BankMapper.INSTANCE.toEntity(bankRequestDTO);
+        Bank bank = BankMapper.INSTANCE.toEntity(bankRequestDTO);
 
-        entity.getBranches().forEach(branch -> branch.setBank(entity));
-
-        Bank bank = bankRepository.save(entity);
+        bank = createBank(bank);
 
         return BankMapper.INSTANCE.toResponseDTO(bank);
     }
 
+    private Bank createBank(Bank bank) {
+        bank.getBranches().forEach(branch -> branch.setBank(bank));
+
+        return bankRepository.save(bank);
+    }
+
     @Transactional
     public BankResponseDTO update(Long id, BankRequestDTO bankRequestDTO) {
-        Bank entity = BankMapper.INSTANCE.toEntity(bankRequestDTO);
+        Bank bank = BankMapper.INSTANCE.toEntity(bankRequestDTO);
 
-        Bank updatedBank = bankRepository.findById(id)
-                .map(bank -> updateBank(bank, entity))
+        bank = findAndUpdateBank(id, bank);
+
+        return BankMapper.INSTANCE.toResponseDTO(bank);
+    }
+
+    private Bank findAndUpdateBank(Long id, Bank updateData) {
+        return bankRepository.findById(id)
+                .map(bank -> updateBank(bank, updateData))
                 .orElseThrow(() -> new EntityNotFoundException(BANK_ID_NOT_FOUND + id));
-
-        return BankMapper.INSTANCE.toResponseDTO(updatedBank);
     }
 
     private Bank updateBank(Bank bank, Bank updateData) {
-        removeOrphanBranches(bank, updateData);
+        updateBankBranches(bank, updateData);
 
         updateBankData(bank, updateData);
 
         return bankRepository.save(bank);
     }
 
-    private void removeOrphanBranches(Bank bank, Bank updateData) {
-        List<Branch> orphanBranches = bank.getBranches().stream()
-                .filter(branch -> updateData.getBranches().stream()
-                        .noneMatch(updateBranch -> updateBranch.getCode().equals(branch.getCode())))
-                .toList();
+    private void updateBankBranches(Bank bank, Bank updateData) {
+        Map<String, Branch> currentBranches = getCurrentBranches(bank);
 
-        orphanBranches.forEach(branch -> bank.getBranches().remove(branch));
+        updateOrAddBranches(bank, updateData, currentBranches);
+
+        removeOrphanBranches(bank, currentBranches);
+    }
+
+    private Map<String, Branch> getCurrentBranches(Bank bank) {
+        return bank.getBranches().stream()
+                .collect(Collectors.toMap(Branch::getCode, branch -> branch));
+    }
+
+    private void updateOrAddBranches(Bank bank, Bank updateData, Map<String, Branch> currentBranches) {
+        updateData.getBranches().forEach(updateBranchData -> {
+            Branch existingBranch = currentBranches.get(updateBranchData.getCode());
+
+            if (existingBranch != null) {
+                updateBranch(existingBranch, updateBranchData);
+            } else {
+                addNewBranch(bank, updateBranchData);
+            }
+
+            currentBranches.remove(updateBranchData.getCode());
+        });
+    }
+
+    private void removeOrphanBranches(Bank bank, Map<String, Branch> currentBranchesMap) {
+        currentBranchesMap.values().forEach(bank.getBranches()::remove);
     }
 
     private void updateBankData(Bank bank, Bank updateData) {
         bank.setName(updateData.getName());
         bank.setType(updateData.getType());
+    }
 
-        for (Branch updateBranchData : updateData.getBranches()) {
-            bank.getBranches().stream()
-                    .filter(branch -> branch.getCode().equals(updateBranchData.getCode()))
-                    .findFirst()
-                    .ifPresentOrElse(branch -> {
-                        branch.setAddress(updateBranchData.getAddress());
-                        branch.setPhone(updateBranchData.getPhone());
-                    }, () -> {
-                        updateBranchData.setBank(bank);
-                        bank.getBranches().add(updateBranchData);
-                    });
-        }
+    private void updateBranch(Branch branch, Branch updateBranchData) {
+        branch.setAddress(updateBranchData.getAddress());
+        branch.setPhone(updateBranchData.getPhone());
+    }
+
+    private void addNewBranch(Bank bank, Branch newBranch) {
+        newBranch.setBank(bank);
+        bank.getBranches().add(newBranch);
     }
 
     @Transactional
