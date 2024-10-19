@@ -42,6 +42,7 @@ class GlobalExceptionHandlerTest {
     private static final String FIELD_VALUE_MUST_BE_ONE_OF = "Field field must be one of [VALUE1, VALUE2]";
     private static final String VALUE_IS_EXPECTED_TO_BE_OF_TYPE = "'field' is expected to be of type 'String'";
     private static final String MISMATCHED_INPUT = "Mismatched input";
+    private static final String SOME_OTHER_CONSTRAINT_VIOLATION = "Some other constraint violation";
     @InjectMocks
     private GlobalExceptionHandler globalExceptionHandler;
 
@@ -73,13 +74,13 @@ class GlobalExceptionHandlerTest {
     }
 
     private void mockFieldError() {
-        FieldError fieldError = new FieldError(OBJECT_NAME, GlobalExceptionHandlerTest.FIELD_NAME, DEFAULT_ERROR_MESSAGE);
+        FieldError fieldError = new FieldError(OBJECT_NAME, FIELD_NAME, DEFAULT_ERROR_MESSAGE);
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
         when(methodArgumentNotValidException.getBindingResult()).thenReturn(bindingResult);
     }
 
     private void mockMethodArgumentTypeMismatchException() {
-        when(methodArgumentTypeMismatchException.getName()).thenReturn(GlobalExceptionHandlerTest.FIELD_NAME);
+        when(methodArgumentTypeMismatchException.getName()).thenReturn(FIELD_NAME);
         when(methodArgumentTypeMismatchException.getRequiredType()).thenReturn((Class) String.class);
     }
 
@@ -169,6 +170,15 @@ class GlobalExceptionHandlerTest {
 
             assertErrorResponse(response, HttpStatus.CONFLICT, DATA_INTEGRITY_VIOLATION, BRANCH_CODE_ALREADY_EXISTS);
         }
+
+        @Test
+        void shouldHandleDataIntegrityViolationExceptionForOtherCases() {
+            when(dataIntegrityViolationException.getMessage()).thenReturn(SOME_OTHER_CONSTRAINT_VIOLATION);
+
+            ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleDataIntegrityViolationException(dataIntegrityViolationException);
+
+            assertErrorResponse(response, HttpStatus.CONFLICT, DATA_INTEGRITY_VIOLATION, SOME_OTHER_CONSTRAINT_VIOLATION);
+        }
     }
 
     @Nested
@@ -247,7 +257,8 @@ class GlobalExceptionHandlerTest {
             ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleHttpMessageNotReadableException(exception);
 
             assertErrorResponse(response, HttpStatus.BAD_REQUEST, BAD_REQUEST, INVALID_REQUEST_BODY);
-        }    }
+        }
+    }
 
     @Nested
     class HandleGeneralExceptionsTests {
